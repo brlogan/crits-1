@@ -99,6 +99,7 @@ class SampleResource(CRITsAPIResource):
                                           source,
                                           method,
                                           reference,
+                                          None,
                                           file_format,
                                           password,
                                           user=analyst,

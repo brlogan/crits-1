@@ -148,6 +148,9 @@
             </div>
         </td>
         </tr>
+        {% with tlp=indicator.tlp %}
+            {% include "tlp_widget.html" %}
+        {% endwith %}
         <tr>
         <td class="key">Status
             <span style="float: right;" class="object_status_response"></span>

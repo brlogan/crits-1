@@ -138,11 +138,12 @@ def upload_indicator(request):
                 request.FILES)
             if form.is_valid():
                 result = handle_indicator_csv(request.FILES['filedata'],
+                                              "file",
+                                              username,
                                               request.POST['source'],
                                               request.POST['method'],
                                               request.POST['reference'],
-                                              "file",
-                                              username, add_domain=True,
+                                              add_domain=True,
                                               related_id=request.POST['related_id'],
                                               related_type=request.POST['related_type'],
                                               relationship_type=request.POST['relationship_type'])
@@ -158,11 +159,11 @@ def upload_indicator(request):
             form = UploadIndicatorTextForm(username, request.POST)
             if form.is_valid():
                 result = handle_indicator_csv(request.POST['data'],
+                                              "ti",
+                                              username,
                                               request.POST['source'],
                                               request.POST['method'],
                                               request.POST['reference'],
-                                              "ti",
-                                              username,
                                               add_domain=True,
                                               related_id=request.POST['related_id'],
                                               related_type=request.POST['related_type'],
@@ -188,6 +189,7 @@ def upload_indicator(request):
                     username,
                     request.POST['method'],
                     request.POST['reference'],
+                    None,
                     add_domain=True,
                     description=request.POST['description'],
                     campaign=request.POST['campaign'],
@@ -400,6 +402,7 @@ def indicator_from_tlo(request):
                                                None,
                                                request.user.username,
                                                source,
+                                               None,
                                                tlo_id,
                                                ind_type,
                                                value)

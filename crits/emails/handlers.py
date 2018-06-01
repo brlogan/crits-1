@@ -495,6 +495,11 @@ def handle_email_fields(data, analyst, method, related_id=None,
         del data['source_reference']
     except:
         pass
+    tlp = data.get('source_tlp', 'amber')
+    try:
+        del data['source_tlp']
+    except:
+        pass
     bucket_list = data.get('bucket_list', None)
     try:
         del data['bucket_list']
@@ -555,7 +560,7 @@ def handle_email_fields(data, analyst, method, related_id=None,
 
 
     new_email.add_source(source=sourcename, method=method,
-                         reference=reference, analyst=analyst)
+                         reference=reference, analyst=analyst, tlp=tlp)
 
 
     try:
@@ -577,7 +582,7 @@ def handle_email_fields(data, analyst, method, related_id=None,
                            user=analyst)
     return result
 
-def handle_json(data, sourcename, reference, analyst, method,
+def handle_json(data, sourcename, reference, analyst, method, tlp,
                 save_unsupported=True, campaign=None, confidence=None,
                 bucket_list=None, ticket=None):
 
@@ -646,7 +651,7 @@ def handle_json(data, sourcename, reference, analyst, method,
     result['object'] = new_email
 
     result['object'].add_source(source=sourcename, reference=reference,
-                                method=method, analyst=analyst)
+                                method=method, analyst=analyst, tlp=tlp)
 
     try:
         result['object'].save(username=analyst)
@@ -659,7 +664,7 @@ def handle_json(data, sourcename, reference, analyst, method,
     return result
 
 # if email_id is provided it is the existing email id to modify.
-def handle_yaml(data, sourcename, reference, analyst, method, email_id=None,
+def handle_yaml(data, sourcename, reference, analyst, method, tlp, email_id=None,
                 save_unsupported=True, campaign=None, confidence=None,
                 bucket_list=None, ticket=None, related_id=None,
                 related_type=None, relationship_type=None):
@@ -676,6 +681,8 @@ def handle_yaml(data, sourcename, reference, analyst, method, email_id=None,
     :type analyst: str
     :param method: The method of acquiring this email.
     :type method: str
+    :param tlp: The tlp of the source of this email.
+    :type tlp: str
     :param email_id: The ObjectId of the existing email to update.
     :type email_id: str
     :param save_unsupported: Save any unsupported fields instead of ignoring.
@@ -760,7 +767,7 @@ def handle_yaml(data, sourcename, reference, analyst, method, email_id=None,
             return result
     else:
         result['object'].add_source(source=sourcename, method=method,
-                                    reference=reference, analyst=analyst)
+                                    reference=reference, analyst=analyst, tlp=tlp)
 
         result['object'].save(username=analyst)
 
@@ -910,7 +917,7 @@ def handle_msg(data, sourcename, reference, analyst, method, password='',
     response['obj_id'] = obj['object'].id
     return response
 
-def handle_pasted_eml(data, sourcename, reference, analyst, method,
+def handle_pasted_eml(data, sourcename, reference, analyst, method, tlp,
                       campaign=None, confidence=None, bucket_list=None,
                       ticket=None, related_id=None, related_type=None,
                       relationship_type=None):
@@ -926,6 +933,8 @@ def handle_pasted_eml(data, sourcename, reference, analyst, method,
     :param analyst: The user creating this email object.
     :type analyst: str
     :param method: The method of acquiring this email.
+    :type method: str
+    :param tlp: The tlp of acquiring this email.
     :type method: str
     :param campaign: The campaign to attribute to this email.
     :type campaign: str
@@ -967,12 +976,12 @@ def handle_pasted_eml(data, sourcename, reference, analyst, method,
             line = " %s" % line
         emldata.append(line)
     emldata = "\n".join(emldata)
-    return handle_eml(emldata, sourcename, reference, analyst, method,
+    return handle_eml(emldata, sourcename, reference, analyst, method, tlp,
                       campaign, confidence, bucket_list, ticket,
                       related_id, related_type, relationship_type)
 
 
-def handle_eml(data, sourcename, reference, analyst, method, campaign=None,
+def handle_eml(data, sourcename, reference, analyst, method, tlp, campaign=None,
                confidence=None, bucket_list=None, ticket=None,
                related_id=None, related_type=None, relationship_type=None):
     """
@@ -988,6 +997,8 @@ def handle_eml(data, sourcename, reference, analyst, method, campaign=None,
     :type analyst: str
     :param method: The method of acquiring this email.
     :type method: str
+    :param tlp: The tlp of acquiring this email.
+    :type tlp: str
     :param campaign: The campaign to attribute to this email.
     :type campaign: str
     :param confidence: Confidence level of the campaign.
@@ -1151,7 +1162,7 @@ def handle_eml(data, sourcename, reference, analyst, method, campaign=None,
     result['object'] = new_email
 
     result['object'].add_source(source=sourcename, reference=reference,
-                                method=method, analyst=analyst)
+                                method=method, analyst=analyst, tlp=tlp)
 
     # Save the Email first, so we can have the id to use to create
     # relationships.
@@ -1415,7 +1426,7 @@ def create_indicator_from_header_field(email, header_field, ind_type,
     return result
 
 def create_email_attachment(email, cleaned_data, analyst, source, method="Upload",
-                            reference="", campaign=None, confidence='low',
+                            reference="", tlp=None, campaign=None, confidence='low',
                             bucket_list=None, ticket=None, filedata=None,
                             filename=None, md5=None, email_addr=None, inherit_sources=False):
     """
@@ -1473,6 +1484,7 @@ def create_email_attachment(email, cleaned_data, analyst, source, method="Upload
                                           source,
                                           method,
                                           reference,
+                                          tlp,
                                           cleaned_data['file_format'],
                                           cleaned_data['password'],
                                           analyst,
@@ -1491,6 +1503,7 @@ def create_email_attachment(email, cleaned_data, analyst, source, method="Upload
                                           source,
                                           method,
                                           reference,
+                                          tlp,
                                           cleaned_data['file_format'],
                                           None,
                                           analyst,

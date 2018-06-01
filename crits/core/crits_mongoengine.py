@@ -349,6 +349,12 @@ class CritsDocument(BaseDocument):
             audit_entry(self, username, "save")
         else:
             do_audit = True
+
+        try:
+            self.unsupported_attrs.__delattr__('get_tlp_display')
+        except:
+            pass
+
         super(self.__class__, self).save(force_insert=force_insert,
                                          validate=validate,
                                          clean=clean,
@@ -864,7 +870,7 @@ class CritsSourceDocument(BaseDocument):
         s = None
         if source and analyst:
             if tlp not in ('white', 'green', 'amber', 'red'):
-                tlp = 'red'
+                tlp = 'amber'
             if not date:
                 date = datetime.datetime.now()
             s = EmbeddedSource()
@@ -923,7 +929,7 @@ class CritsSourceDocument(BaseDocument):
         """
 
         if tlp not in ('white', 'green', 'amber', 'red'):
-            tlp = 'red'
+            tlp = 'amber'
         if source and date:
             for c, s in enumerate(self.source):
                 if s.name == source:
@@ -1245,7 +1251,7 @@ class CritsBaseAttributes(CritsDocument, CritsBaseDocument,
         """
 
         if tlp not in ('white', 'green', 'amber', 'red'):
-            tlp = 'red'
+            tlp = 'amber'
         if tlp in self.get_acceptable_tlp_levels():
             self.tlp = tlp
 
@@ -2598,8 +2604,8 @@ def create_embedded_source(name, source_instance=None, date=None,
     :returns: None, :class:`crits.core.crits_mongoengine.EmbeddedSource`
     """
 
-    if tlp not in ('white', 'green', 'amber', 'red', None):
-        return None
+    if tlp not in ('white', 'green', 'amber', 'red'):
+        tlp = 'amber'
 
     if isinstance(name, basestring):
         s = EmbeddedSource()

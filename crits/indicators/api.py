@@ -75,6 +75,7 @@ class IndicatorResource(CRITsAPIResource):
                                        analyst,
                                        method,
                                        reference,
+                                       None,
                                        add_domain,
                                        add_relationship,
                                        campaign,

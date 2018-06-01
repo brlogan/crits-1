@@ -108,6 +108,9 @@
                 <td class="key">SSDeep</td>
                 <td>{{ sample.ssdeep }}</td>
             </tr>
+            {% with tlp=sample.tlp %}
+                {% include "tlp_widget.html" %}
+            {% endwith %}
             <tr>
                 <td class="key">Status
                     <span style="float: right;" class="object_status_response"></span>

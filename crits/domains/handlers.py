@@ -352,13 +352,15 @@ def add_new_domain(data, request, errors, rowData=None, is_validate_only=False, 
         reference = data.get('domain_reference')
         source_name = data.get('domain_source')
         method = data.get('domain_method')
-        source = [create_embedded_source(source_name, reference=reference,
-                                         method=method, analyst=username)]
+        tlp = data.get('source.tlp')
         bucket_list = data.get(form_consts.Common.BUCKET_LIST_VARIABLE_NAME)
         ticket = data.get(form_consts.Common.TICKET_VARIABLE_NAME)
         related_id = data.get('related_id')
         related_type = data.get('related_type')
         relationship_type = data.get('relationship_type')
+
+        source = [create_embedded_source(source_name, reference=reference,
+                                         method=method, tlp=tlp, analyst=username)]
 
         if data.get('campaign') and data.get('confidence'):
             campaign = [EmbeddedCampaign(name=data.get('campaign'),
@@ -382,16 +384,19 @@ def add_new_domain(data, request, errors, rowData=None, is_validate_only=False, 
                     ip_source = source_name
                     ip_method = method
                     ip_reference = reference
+                    ip_tlp = tlp
                 else:
                     ip_source = data.get('ip_source')
                     ip_method = data.get('ip_method')
                     ip_reference = data.get('ip_reference')
+                    ip_tlp = data.get('ip_tlp')
                 from crits.ips.handlers import ip_add_update
                 ip_result = ip_add_update(ip,
                                           ip_type,
                                           ip_source,
                                           ip_method,
                                           ip_reference,
+                                          source_tlp=ip_tlp,
                                           campaign=campaign,
                                           analyst=username,
                                           bucket_list=bucket_list,
@@ -431,6 +436,7 @@ def add_new_domain(data, request, errors, rowData=None, is_validate_only=False, 
                                                        ip,
                                                        username,
                                                        ip_source,
+                                                       source_tlp=ip_tlp,
                                                        add_domain=False)
                     ip_ind = result.get('indicator')
                     if not result['success']:
@@ -441,6 +447,7 @@ def add_new_domain(data, request, errors, rowData=None, is_validate_only=False, 
                                                    new_domain,
                                                    username,
                                                    source_name,
+                                                   source_tlp=tlp,
                                                    add_domain=False)
 
                 if not result['success']:

@@ -337,11 +337,11 @@ def add_new_ip(data, rowData, request, errors, is_validate_only=False, cache={})
     return result, errors, retVal
 
 def ip_add_update(ip_address, ip_type, source=None, source_method='',
-                  source_reference='', campaign=None, confidence='low',
-                  analyst=None, is_add_indicator=False, indicator_reference='',
-                  bucket_list=None, ticket=None, is_validate_only=False,
-                  cache={}, related_id=None, related_type=None,
-                  relationship_type=None, description=''):
+                  source_reference='', source_tlp=None, campaign=None,
+                  confidence='low', analyst=None, is_add_indicator=False,
+                  indicator_reference='', bucket_list=None, ticket=None,
+                  is_validate_only=False, cache={}, related_id=None,
+                  related_type=None, relationship_type=None, description=''):
     """
     Add/update an IP address.
 
@@ -424,6 +424,7 @@ def ip_add_update(ip_address, ip_type, source=None, source_method='',
         source = [create_embedded_source(source,
                                          reference=source_reference,
                                          method=source_method,
+                                         tlp=source_tlp,
                                          analyst=analyst)]
 
     if isinstance(campaign, basestring):

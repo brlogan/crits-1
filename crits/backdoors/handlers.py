@@ -178,9 +178,9 @@ def get_backdoor_details(id_, user):
 
 def add_new_backdoor(name, version=None, aliases=None, description=None,
                      source=None, source_method=None, source_reference=None,
-                     campaign=None, confidence=None, user=None,
-                     bucket_list=None, ticket=None, related_id=None,
-                     related_type=None, relationship_type=None):
+                     source_tlp=None, campaign=None, confidence=None,
+                     user=None, bucket_list=None, ticket=None,
+                     related_id=None,related_type=None, relationship_type=None):
     """
     Add an Backdoor to CRITs.
 
@@ -227,6 +227,7 @@ def add_new_backdoor(name, version=None, aliases=None, description=None,
         source = [create_embedded_source(source,
                                          reference=source_reference,
                                          method=source_method,
+                                         tlp=source_tlp,
                                          analyst=user)]
     elif isinstance(source, EmbeddedSource):
         source = [source]

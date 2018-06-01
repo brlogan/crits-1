@@ -47,6 +47,9 @@
                 <td class="key">DNSMon Enabled</td>
                 <td>{{domain.watchlistEnabled|default:"False"}}</td>
             </tr>
+            {% with tlp=domain.tlp %}
+                        {% include "tlp_widget.html" %}
+            {% endwith %}
             <tr>
                 <td class="key">Status
                     <span style="float: right;" class="object_status_response"></span>

@@ -66,6 +66,9 @@
                             {% include 'description_widget.html' %}
                         {% endwith %}
                     </tr>
+                    {% with tlp=backdoor.tlp %}
+                        {% include "tlp_widget.html" %}
+                    {% endwith %}
                     <tr>
                         <td class="key">Created</td>
                         <td>{{backdoor.created}}</td>

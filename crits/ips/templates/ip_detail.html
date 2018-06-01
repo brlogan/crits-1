@@ -46,6 +46,9 @@
                         <td class="key">Type</td>
                         <td>{{ip.ip_type}}</td>
                     </tr>
+                    {% with tlp=ip.tlp %}
+                        {% include "tlp_widget.html" %}
+                    {% endwith %}
                     <tr>
                         <td class="key">Status
                             <span style="float: right;" class="object_status_response"></span>

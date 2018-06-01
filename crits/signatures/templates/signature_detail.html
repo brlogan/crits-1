@@ -94,6 +94,9 @@
                     {% include 'description_widget.html' %}
                 {% endwith %}
             </tr>
+            {% with tlp=signature.tlp %}
+                {% include "tlp_widget.html" %}
+            {% endwith %}
             <tr>
                 <td class="key">Status
                     <span style="float: right;" class="object_status_response"></span>

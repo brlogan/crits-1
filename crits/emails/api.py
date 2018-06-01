@@ -83,7 +83,7 @@ class EmailResource(CRITsAPIResource):
                 self.crits_response(content)
             filedata = file_.read()
             result = handle_eml(filedata, source, reference,
-                                analyst, 'EML Upload' + method, campaign,
+                                analyst, 'EML Upload' + method, None, campaign,
                                 confidence, bucket_list=bucket_list, ticket=ticket)
         if type_ == 'msg':
             raw_email = bundle.data.get('filedata', None)
@@ -105,6 +105,7 @@ class EmailResource(CRITsAPIResource):
                                        reference,
                                        analyst,
                                        'Raw Upload' + method,
+                                       None,
                                        campaign,
                                        confidence,
                                        bucket_list=bucket_list,
@@ -118,6 +119,7 @@ class EmailResource(CRITsAPIResource):
                                  reference,
                                  analyst,
                                  'YAML Upload' + method,
+                                 None,
                                  email_id,
                                  save_unsupported,
                                  campaign,

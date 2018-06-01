@@ -329,23 +329,25 @@ def get_verified_field(data, valid_values, field=None, default=None):
     else:
         return value_list[0]
 
-def handle_indicator_csv(csv_data, source, method, reference, ctype, username,
-                         add_domain=False, related_id=None, related_type=None, relationship_type=None):
+def handle_indicator_csv(csv_data, ctype, username, source, method=None,
+                         reference=None, source_tlp=None,
+                         add_domain=False, related_id=None,
+                         related_type=None, relationship_type=None):
     """
     Handle adding Indicators in CSV format (file or blob).
 
     :param csv_data: The CSV data.
     :type csv_data: str or file handle
+    :param ctype: The CSV type.
+    :type ctype: str ("file" or "blob")
+    :param username: The user adding these indicators.
+    :type username: str
     :param source: The name of the source for these indicators.
     :type source: str
     :param method: The method of acquisition of this indicator.
     :type method: str
     :param reference: The reference to this data.
     :type reference: str
-    :param ctype: The CSV type.
-    :type ctype: str ("file" or "blob")
-    :param username: The user adding these indicators.
-    :type username: str
     :param add_domain: If the indicators being added are also other top-level
                        objects, add those too.
     :type add_domain: boolean
@@ -443,10 +445,15 @@ def handle_indicator_csv(csv_data, source, method, reference, ctype, username,
         ind[form_consts.Common.BUCKET_LIST_VARIABLE_NAME] = d.get(form_consts.Common.BUCKET_LIST, '')
         ind[form_consts.Common.TICKET_VARIABLE_NAME] = d.get(form_consts.Common.TICKET, '')
         try:
-            response = handle_indicator_insert(ind, source, reference,
-                                               analyst=username, method=method,
-                                               add_domain=add_domain, related_id=related_id,
-                                               related_type=related_type, relationship_type=relationship_type)
+            response = handle_indicator_insert(ind, source,
+                                               reference=reference,
+                                               method=method,
+                                               source_tlp=source_tlp,
+                                               analyst=username,
+                                               add_domain=add_domain,
+                                               related_id=related_id,
+                                               related_type=related_type,
+                                               relationship_type=relationship_type)
         except Exception, e:
             result['success'] = False
             result_message += msg % (processed + 1, e)
@@ -476,7 +483,7 @@ def handle_indicator_csv(csv_data, source, method, reference, ctype, username,
     return result
 
 def handle_indicator_ind(value, source, ctype, threat_type, attack_type,
-                         analyst, method='', reference='',
+                         analyst, method='', reference='', source_tlp=None,
                          add_domain=False, add_relationship=False, campaign=None,
                          campaign_confidence=None, confidence=None,
                          description=None, impact=None,
@@ -574,18 +581,21 @@ def handle_indicator_ind(value, source, ctype, threat_type, attack_type,
             ind[form_consts.Common.TICKET_VARIABLE_NAME] = ticket
 
         try:
-            return handle_indicator_insert(ind, source, reference, analyst,
-                                           method, add_domain, add_relationship, cache=cache,
-                                        related_id=related_id, related_type=related_type,
-                                        relationship_type=relationship_type)
+            result = handle_indicator_insert(ind, source, reference=reference,
+                                             method=method, source_tlp=source_tlp,
+                                             analyst=analyst, add_domain=add_domain,
+                                             add_relationship=add_relationship, cache=cache,
+                                             related_id=related_id, related_type=related_type,
+                                             relationship_type=relationship_type)
         except Exception, e:
             return {'success': False, 'message': repr(e)}
 
     return result
 
 def handle_indicator_insert(ind, source, reference='', analyst='', method='',
-                            add_domain=False, add_relationship=False, cache={},
-                            related_id=None, related_type=None, relationship_type=None):
+                            source_tlp=None, add_domain=False,
+                            add_relationship=False, cache={}, related_id=None,
+                            related_type=None, relationship_type=None):
     """
     Insert an individual indicator into the database.
 
@@ -722,15 +732,15 @@ def handle_indicator_insert(ind, source, reference='', analyst='', method='',
     # generate new source information and add to indicator
     if isinstance(source, basestring) and source:
         indicator.add_source(source=source, method=method,
-                             reference=reference, analyst=analyst)
+                             reference=reference, analyst=analyst, tlp=source_tlp)
     elif isinstance(source, EmbeddedSource):
         indicator.add_source(source_item=source, method=method,
-                             reference=reference)
+                             reference=reference, tlp=source_tlp)
     elif isinstance(source, list):
         for s in source:
             if isinstance(s, EmbeddedSource):
                 indicator.add_source(source_item=s, method=method,
-                                     reference=reference)
+                                     reference=reference, tlp=source_tlp)
 
     if add_domain or add_relationship:
         ind_type = indicator.ind_type
@@ -1226,7 +1236,7 @@ def create_indicator_and_ip(type_, id_, ip, analyst):
                 'message': "Could not find %s to add relationships" % type_}
 
 def create_indicator_from_tlo(tlo_type, tlo, analyst, source_name=None,
-                              tlo_id=None, ind_type=None, value=None,
+                              source_tlp=None, tlo_id=None, ind_type=None, value=None,
                               update_existing=True, add_domain=True):
     """
     Create an indicator from a Top-Level Object (TLO).
@@ -1311,6 +1321,7 @@ def create_indicator_from_tlo(tlo_type, tlo, analyst, source_name=None,
                                method= 'Indicator created/updated ' \
                                        'from %s with ID %s' % (tlo_type, tlo.id),
                                date=datetime.datetime.now(),
+                               tlp=source_tlp,
                                analyst = analyst)
 
             tlo.add_relationship(ind,

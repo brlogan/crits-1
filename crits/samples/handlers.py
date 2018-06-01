@@ -504,7 +504,8 @@ def handle_unzip_file(md5, user=None, password=None):
                       reference=reference, campaign=campaign, related_md5=md5, )
 
 def unzip_file(filename, user=None, password=None, data=None, source=None,
-               method='Zip', reference='', campaign=None, confidence='low',
+               method='Zip', reference='', source_tlp='',
+               campaign=None, confidence='low',
                related_md5=None, related_id=None, related_type='Sample',
                relationship_type=None, bucket_list=None, ticket=None,
                inherited_source=None, is_return_only_md5=True,
@@ -527,6 +528,8 @@ def unzip_file(filename, user=None, password=None, data=None, source=None,
     :type method: str
     :param reference: A reference to the data source.
     :type reference: str
+    :param source_tlp: TLP of the source
+    :type source_tlp: str
     :param campaign: The campaign to attribute to the data.
     :type campaign: str
     :param confidence: The confidence level of the campaign attribution.
@@ -616,6 +619,7 @@ def unzip_file(filename, user=None, password=None, data=None, source=None,
                     filehandle = open(filepath, 'rb')
                     new_sample = handle_file(filename, filehandle.read(),
                                              source, method, reference,
+                                             source_tlp=source_tlp,
                                              related_md5=related_md5,
                                              related_id=related_id,
                                              related_type=related_type,
@@ -649,14 +653,15 @@ def unzip_file(filename, user=None, password=None, data=None, source=None,
             shutil.rmtree(extractdir)
     return samples
 
-def handle_file(filename, data, source, method='Generic', reference='',
-                related_md5=None, related_id=None, related_type=None,
-                relationship_type=None, backdoor=None, user='', campaign=None,
-                confidence='low', md5_digest=None, sha1_digest=None,
-                sha256_digest=None, size=0, mimetype=None, bucket_list=None,
-                ticket=None, relationship=None, inherited_source=None,
-                is_validate_only=False, is_return_only_md5=True, cache={},
-                backdoor_name=None, backdoor_version=None, description=''):
+def handle_file(filename, data, source, method='', reference='',
+                source_tlp='', related_md5=None, related_id=None,
+                related_type=None, relationship_type=None, backdoor=None,
+                user='', campaign=None, confidence='low', md5_digest=None,
+                sha1_digest=None, sha256_digest=None, size=0, mimetype=None,
+                bucket_list=None, ticket=None, relationship=None,
+                inherited_source=None, is_validate_only=False,
+                is_return_only_md5=True, cache={}, backdoor_name=None,
+                backdoor_version=None, description=''):
     """
     Handle adding a file.
 
@@ -670,6 +675,8 @@ def handle_file(filename, data, source, method='Generic', reference='',
     :type method: str
     :param reference: A reference to the data source.
     :type reference: str
+    :param source_tlp: TLP of the source
+    :type source_tlp: str
     :param related_md5: The MD5 of a related sample.
     :type related_md5: str
     :param related_id: The ObjectId of a related top-level object.
@@ -867,15 +874,16 @@ def handle_file(filename, data, source, method='Generic', reference='',
         s = create_embedded_source(source,
                                    method=method,
                                    reference=reference,
+                                   tlp=source_tlp,
                                    analyst=user)
         # this will handle adding a new source, or an instance automatically
         sample.add_source(s)
     elif isinstance(source, EmbeddedSource):
-        sample.add_source(source, method=method, reference=reference)
+        sample.add_source(source, method=method, reference=reference, tlp=source_tlp)
     elif isinstance(source, list) and len(source) > 0:
         for s in source:
             if isinstance(s, EmbeddedSource):
-                sample.add_source(s, method=method, reference=reference)
+                sample.add_source(s, method=method, reference=reference, tlp=source_tlp)
 
     if bucket_list:
         sample.add_bucket_list(bucket_list, user)
@@ -993,7 +1001,7 @@ def handle_file(filename, data, source, method='Generic', reference='',
         retVal['object'] = sample
         return retVal
 
-def handle_uploaded_file(f, source, method='', reference='', file_format=None,
+def handle_uploaded_file(f, source, method='', reference='', source_tlp='', file_format=None,
                          password=None, user=None, campaign=None, confidence='low',
                          related_md5=None, related_id=None, related_type=None,relationship_type=None,
                          filename=None, md5=None, sha1=None, sha256=None, size=None,
@@ -1093,6 +1101,7 @@ def handle_uploaded_file(f, source, method='', reference='', file_format=None,
             source=source,
             method=method,
             reference=reference,
+            source_tlp=source_tlp,
             campaign=campaign,
             confidence=confidence,
             related_md5=related_md5,
@@ -1107,18 +1116,30 @@ def handle_uploaded_file(f, source, method='', reference='', file_format=None,
             backdoor_version=backdoor_version,
             description=description)
     else:
-        new_sample = handle_file(filename, data, source, method, reference,
-                                 related_md5=related_md5, related_id=related_id,
-                                 related_type=related_type, relationship_type=relationship_type,
-                                 backdoor='', user=user, campaign=campaign,
-                                 confidence=confidence, md5_digest=md5,
-                                 sha1_digest=sha1, sha256_digest=sha256,
-                                 size=size, mimetype=mimetype,
-                                 bucket_list=bucket_list, ticket=ticket,
+        new_sample = handle_file(filename, data, source,
+                                 method,
+                                 reference,
+                                 source_tlp=source_tlp,
+                                 related_md5=related_md5,
+                                 related_id=related_id,
+                                 related_type=related_type,
+                                 relationship_type=relationship_type,
+                                 backdoor='',
+                                 user=user,
+                                 campaign=campaign,
+                                 confidence=confidence,
+                                 md5_digest=md5,
+                                 sha1_digest=sha1,
+                                 sha256_digest=sha256,
+                                 size=size,
+                                 mimetype=mimetype,
+                                 bucket_list=bucket_list,
+                                 ticket=ticket,
                                  inherited_source=inherited_source,
                                  is_validate_only=is_validate_only,
                                  is_return_only_md5=is_return_only_md5,
-                                 cache=cache, backdoor_name=backdoor_name,
+                                 cache=cache,
+                                 backdoor_name=backdoor_name,
                                  backdoor_version=backdoor_version,
                                  description=description)
 

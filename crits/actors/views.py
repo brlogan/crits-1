@@ -321,6 +321,7 @@ def add_identifier(request):
                                               source,
                                               method,
                                               reference,
+                                              None,
                                               username)
             return HttpResponse(json.dumps(result),
                                 content_type="application/json")
