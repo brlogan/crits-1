@@ -670,7 +670,7 @@ def merge_source_lists(left, right):
     return left
 
 def source_add_update(type_, id_, action_type, source, method='',
-                      reference='', date=None, user=None, **kwargs):
+                      reference='', tlp=None, date=None, user=None, **kwargs):
     """
     Add or update a source for a top-level object.
 
@@ -686,6 +686,8 @@ def source_add_update(type_, id_, action_type, source, method='',
     :type method: str
     :param reference: The reference to the data for the source.
     :type reference: str
+    :param tlp: The TLP level from this source.
+    :type tlp: str
     :param date: The date of the instance to add/update.
     :type date: datetime.datetime
     :param user: The user performing the add/update.
@@ -709,12 +711,14 @@ def source_add_update(type_, id_, action_type, source, method='',
                         method=method,
                         reference=reference,
                         date=date,
+                        tlp=tlp,
                         analyst=user)
         else:
             obj.edit_source(source=source,
                             method=method,
                             reference=reference,
                             date=date,
+                            tlp=tlp,
                             analyst=user)
         obj.save(username=user)
         obj.reload()
@@ -4228,6 +4232,42 @@ def get_bucket_autocomplete(term):
     buckets = [b.name for b in results]
     return HttpResponse(json.dumps(buckets, default=json_handler),
                         content_type='application/json')
+
+def modify_tlp(itype, oid, tlp, analyst):
+    """
+    Modify the TLP for a top-level object.
+    :param itype: The CRITs type of the top-level object to modify.
+    :type itype: str
+    :param oid: The ObjectId to search for.
+    :type oid: str
+    :param tlp: The TLP to set.
+    :type sectors: str
+    :param analyst: The user making the modifications.
+    """
+
+    obj = class_from_id(itype, oid)
+    if not obj:
+        return {'success': False,
+                'message': "Cannot find object to set this TLP level for."}
+
+    tlp_dict = {'#ffffff': 'white',
+                '#00ff00': 'green',
+                '#ffcc22': 'amber',
+                '#ff0000': 'red'}
+
+    tlp = tlp_dict.get(tlp, None) or tlp
+    obj.set_tlp(tlp)
+
+    try:
+        obj.save(username=analyst)
+        if obj.tlp == tlp:
+            return {'success': True}
+        else:
+            return {'success': False,
+                    'message': "Cannot set this TLP level."}
+    except ValidationError:
+        return {'success': False,
+                'message': "Invalid TLP level."}
 
 def add_new_action(action, object_types, preferred, analyst):
     """

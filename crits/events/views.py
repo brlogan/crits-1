@@ -58,6 +58,7 @@ def add_event(request):
                                    source=data['source'],
                                    method=data['method'],
                                    reference=data['reference'],
+                                   source_tlp=data.get('source_tlp'),
                                    date=data['occurrence_date'],
                                    bucket_list=data[form_consts.Common.BUCKET_LIST_VARIABLE_NAME],
                                    ticket=data[form_consts.Common.TICKET_VARIABLE_NAME],

@@ -75,6 +75,7 @@ class EventResource(CRITsAPIResource):
                                source,
                                method,
                                reference,
+                               None,
                                date,
                                analyst,
                                bucket_list,

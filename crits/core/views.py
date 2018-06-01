@@ -50,7 +50,7 @@ from crits.core.handlers import details_from_id, status_update
 from crits.core.handlers import get_favorites, favorite_update
 from crits.core.handlers import generate_favorites_jtable
 from crits.core.handlers import ticket_add, ticket_update, ticket_remove
-from crits.core.handlers import description_update, data_update
+from crits.core.handlers import modify_tlp, description_update, data_update
 from crits.core.handlers import do_add_preferred_actions, add_new_action
 from crits.core.handlers import action_add, action_remove, action_update
 from crits.core.handlers import get_action_types_for_tlo
@@ -719,6 +719,7 @@ def add_update_source(request, method, obj_type, obj_id):
                                            data['name'],
                                            method=data['method'],
                                            reference=data['reference'],
+                                           tlp=data['tlp'],
                                            date=date,
                                            user=user)
                 if 'object' in result:
@@ -2146,6 +2147,25 @@ def bucket_autocomplete(request):
         if term:
             return get_bucket_autocomplete(term)
     return HttpResponse({})
+
+@user_passes_test(user_can_view_data)
+def tlp_modify(request):
+    """
+    Modify the TLP for a top-level object. Should be an AJAX POST.
+    :param request: Django request.
+    :type request: :class:`django.http.HttpRequest`
+    :returns: :class:`django.http.HttpResponse`
+    """
+
+    if request.method == "POST" and request.is_ajax():
+        tlp = request.POST['tlp']
+        oid = request.POST['oid']
+        itype = request.POST['itype']
+        results = modify_tlp(itype, oid, tlp, request.user.username)
+        return HttpResponse(json.dumps(results), content_type="application/json")
+    else:
+        return render(request, "error.html",
+                                  {"error" : 'Expected AJAX POST.'})
 
 @user_passes_test(user_can_view_data)
 def new_action(request):

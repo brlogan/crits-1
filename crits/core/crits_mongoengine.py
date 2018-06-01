@@ -4,6 +4,7 @@ import io
 import csv
 
 from bson import json_util, ObjectId
+from collections import OrderedDict
 from dateutil.parser import parse
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -812,6 +813,7 @@ class EmbeddedSource(EmbeddedDocument, CritsDocumentFormatter):
         date = CritsDateTimeField(default=datetime.datetime.now)
         method = StringField()
         reference = StringField()
+        tlp = StringField(default='red', choices=('white', 'green', 'amber', 'red'))
 
         def __eq__(self, other):
             """
@@ -838,7 +840,7 @@ class CritsSourceDocument(BaseDocument):
     source = ListField(EmbeddedDocumentField(EmbeddedSource), required=True)
 
     def add_source(self, source_item=None, source=None, method='',
-                   reference='', date=None, analyst=None):
+                   reference='', date=None, analyst=None, tlp=None):
         """
         Add a source instance to this top-level object.
 
@@ -854,10 +856,15 @@ class CritsSourceDocument(BaseDocument):
         :type date: datetime.datetime
         :param analyst: The user adding the source instance.
         :type analyst: str
+        :param tlp: The TLP level this data was shared under.
+        :type tlp: str
         """
 
+        sc = len(self.source)
         s = None
         if source and analyst:
+            if tlp not in ('white', 'green', 'amber', 'red'):
+                tlp = 'red'
             if not date:
                 date = datetime.datetime.now()
             s = EmbeddedSource()
@@ -867,16 +874,18 @@ class CritsSourceDocument(BaseDocument):
             i.reference = reference
             i.method = method
             i.analyst = analyst
+            i.tlp = tlp
             s.instances = [i]
         if not isinstance(source_item, EmbeddedSource):
             source_item = s
 
         if isinstance(source_item, EmbeddedSource):
             match = None
-            if method or reference: # if method or reference is given, use it
+            if method or reference or tlp: # use method, reference, and tlp
                 for instance in source_item.instances:
                     instance.method = method or instance.method
                     instance.reference = reference or instance.reference
+                    instance.tlp = tlp or instance.tlp
             for c, s in enumerate(self.source):
                 if s.name == source_item.name: # find index of matching source
                     match = c
@@ -891,9 +900,11 @@ class CritsSourceDocument(BaseDocument):
                         self.source[match].instances.append(new_inst)
             else: # else, add as new source
                 self.source.append(source_item)
+            if not sc:
+                self.tlp = source_item.instances[0].tlp
 
     def edit_source(self, source=None, date=None, method='',
-                    reference='', analyst=None):
+                    reference='', analyst=None, tlp=None):
         """
         Edit a source instance from this top-level object.
 
@@ -907,8 +918,12 @@ class CritsSourceDocument(BaseDocument):
         :type reference: str
         :param analyst: The user editing the source instance.
         :type analyst: str
+        :param tlp: The TLP this data was shared under.
+        :type tlp: str
         """
 
+        if tlp not in ('white', 'green', 'amber', 'red'):
+            tlp = 'red'
         if source and date:
             for c, s in enumerate(self.source):
                 if s.name == source:
@@ -917,6 +932,7 @@ class CritsSourceDocument(BaseDocument):
                             self.source[c].instances[i].method = method
                             self.source[c].instances[i].reference = reference
                             self.source[c].instances[i].analyst = analyst
+                            self.source[c].instances[i].tlp = tlp
 
     def remove_source(self, source=None, date=None, remove_all=False):
         """
@@ -1220,6 +1236,45 @@ class CritsBaseAttributes(CritsDocument, CritsBaseDocument,
     releasability = ListField(EmbeddedDocumentField(Releasability))
     screenshots = ListField(StringField())
     sectors = ListField(StringField())
+    tlp = StringField(default='red', choices=('white', 'green', 'amber', 'red'))
+
+    def set_tlp(self, tlp):
+        """
+        Set the TLP of this TLO.
+        :param tlp: The TLP to set.
+        """
+
+        if tlp not in ('white', 'green', 'amber', 'red'):
+            tlp = 'red'
+        if tlp in self.get_acceptable_tlp_levels():
+            self.tlp = tlp
+
+    def get_acceptable_tlp_levels(self):
+        """
+        Based on what TLP levels sources have shared, limit the list of TLP
+        levels you can share this with accordingly.
+        :returns: list
+        """
+
+        d = {'white': ['white', 'green', 'amber', 'red'],
+             'green': ['green', 'amber', 'red'],
+             'amber': ['amber', 'red'],
+             'red': ['red']}
+
+        my_tlps = []
+        for s in self.source:
+            for i in s.instances:
+                my_tlps.append(i.tlp)
+        my_tlps = OrderedDict.fromkeys(my_tlps).keys()
+
+        if 'white' in my_tlps:
+            return d['white']
+        elif 'green' in my_tlps:
+            return d['green']
+        elif 'amber' in my_tlps:
+            return d['amber']
+        else:
+            return d['red']
 
     def add_campaign(self, campaign_item=None, update=True):
         """
@@ -2519,7 +2574,8 @@ def json_handler(obj):
         return str(obj)
 
 def create_embedded_source(name, source_instance=None, date=None,
-                           reference='', method='', analyst=None):
+                           reference='', method='', tlp=None,
+                           analyst=None):
     """
     Create an EmbeddedSource object. If source_instance is provided it will be
     used, otherwise date, reference, and method will be used.
@@ -2533,12 +2589,17 @@ def create_embedded_source(name, source_instance=None, date=None,
     :type date: datetime.datetime
     :param reference: The reference for this source instance.
     :type reference: str
+    :param tlp: The TLP for this source instance.
+    :type tlp: str
     :param method: The method for this source instance.
     :type method: str
     :param analyst: The user creating this embedded source.
     :type analyst: str
     :returns: None, :class:`crits.core.crits_mongoengine.EmbeddedSource`
     """
+
+    if tlp not in ('white', 'green', 'amber', 'red', None):
+        return None
 
     if isinstance(name, basestring):
         s = EmbeddedSource()
@@ -2552,6 +2613,7 @@ def create_embedded_source(name, source_instance=None, date=None,
             i.date = date
             i.reference = reference
             i.method = method
+            i.tlp = tlp
             i.analyst = analyst
             s.instances = [i]
         return s

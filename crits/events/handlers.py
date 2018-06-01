@@ -259,10 +259,11 @@ def generate_event_id(event):
 
     return uuid.uuid4()
 
-def add_new_event(title, description, event_type, source, method, reference,
-                  date, analyst, bucket_list=None, ticket=None,
-                  campaign=None, campaign_confidence=None, related_id=None,
-                  related_type=None, relationship_type=None):
+def add_new_event(title, description, event_type, source, method,
+                  reference, source_tlp, date, analyst,
+                  bucket_list=None, ticket=None,
+                  campaign=None, campaign_confidence=None,
+                  related_id=None, related_type=None, relationship_type=None):
     """
     Add a new Event to CRITs.
 
@@ -311,6 +312,7 @@ def add_new_event(title, description, event_type, source, method, reference,
     s = create_embedded_source(name=source,
                                reference=reference,
                                method=method,
+                               tlp=source_tlp,
                                analyst=analyst,
                                date=date)
     event.add_source(s)
