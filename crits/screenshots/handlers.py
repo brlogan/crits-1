@@ -146,9 +146,9 @@ def add_screenshot(description, tags, source, method, reference, analyst,
                 s.add_source(source=source, method=method, reference=reference,
                         analyst=analyst)
                 s.add_tags(tags)
-                s.save()
+                s.save(username=analyst)
                 obj.screenshots.append(screenshot_id)
-                obj.save()
+                obj.save(username=analyst)
                 final_screenshots.append(s)
     else:
         md5 = hashlib.md5(screenshot.read()).hexdigest()

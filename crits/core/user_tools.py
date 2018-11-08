@@ -153,6 +153,29 @@ def user_is_admin(user):
             return is_admin(user)
     return False
 
+def user_can_write(username):
+    """
+    Determine if the user should be able to write to the DB.
+
+    :param username: The user to lookup.
+    :type username: str
+    :returns: True, False
+    """
+
+    write_roles = (
+        'Administrator',
+        'Analyst',
+    )
+
+    from crits.core.user import CRITsUser
+    username = str(username)
+    user = CRITsUser.objects(username=username).first()
+
+    if user and user.is_active:
+        if user.is_authenticated():
+            return user.role in write_roles
+    return False
+
 def get_user_list():
     """
     Get a list of users. Sort the list alphabetically and do not include

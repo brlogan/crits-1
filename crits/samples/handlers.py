@@ -936,7 +936,7 @@ def handle_file(filename, data, source, method='', reference='',
                 backdoor.add_relationship(sample,
                                           RelationshipTypes.RELATED_TO,
                                           analyst=user)
-                backdoor.save()
+                backdoor.save(username=user)
             # Also relate to the specific instance backdoor.
             if backdoor_version:
                 backdoor = Backdoor.objects(name=backdoor_name,
@@ -946,7 +946,7 @@ def handle_file(filename, data, source, method='', reference='',
                     backdoor.add_relationship(sample,
                                               RelationshipTypes.RELATED_TO,
                                               analyst=user)
-                    backdoor.save()
+                    backdoor.save(username=user)
 
         # reloading clears the _changed_fields of the sample object. this prevents
         # situations where we save again below and the shard key (md5) is

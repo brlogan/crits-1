@@ -283,7 +283,7 @@ def comment_update(cleaned_data, obj_type, obj_id, subscr, analyst):
     else:
         comment.edit_comment(cleaned_data['comment'])
         try:
-            comment.save()
+            comment.save(username=analyst)
             comment.comment_to_html()
             html = render_to_string('comments_row_widget.html',
                                     {'comment': comment,

@@ -340,7 +340,7 @@ def add_new_backdoor(name, version=None, aliases=None, description=None,
     # If we have a family and specific object, attempt to relate the two.
     if len(objs) == 2:
         objs[0].add_relationship(objs[1], RelationshipTypes.RELATED_TO)
-        objs[0].save()
+        objs[0].save(username=user)
 
     retVal['success'] = True
     return retVal

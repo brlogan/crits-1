@@ -3928,6 +3928,17 @@ def audit_entry(self, username, type_, new_doc=False):
             a.save()
         except ValidationError:
             pass
+    elif type_ == "update":
+        a = AuditLog()
+        a.user = username
+        a.target_type = my_type
+        a.target_id = self.id
+        a.value = what_changed
+        a.method = "update()"
+        try:
+            a.save()
+        except ValidationError:
+            pass
     elif type_ == "delete":
         a = AuditLog()
         a.user = username

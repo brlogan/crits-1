@@ -276,7 +276,7 @@ def add_object(type_, id_, object_type, source, method, reference, user,
             results = {'success': True}
 
         if not is_validate_only: # save the object
-            tlo.update(add_to_set__obj=ret['object'])
+            tlo.update(add_to_set__obj=ret['object'], username=user)
             results['message'] = "Object added successfully"
 
         if file_:

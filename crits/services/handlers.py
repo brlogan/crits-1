@@ -565,7 +565,7 @@ def do_edit_config(name, analyst, post_data=None):
                 service_class.parse_config(form.cleaned_data)
             except ServiceConfigError as e:
                 service.status = 'misconfigured'
-                service.save()
+                service.save(username=analyst)
                 status['config_error'] = str(e)
                 return status
 
@@ -574,7 +574,7 @@ def do_edit_config(name, analyst, post_data=None):
                 return status
 
             service.status = 'available'
-            service.save()
+            service.save(username=analyst)
         else:
             status['config_error'] = form.errors
             return status

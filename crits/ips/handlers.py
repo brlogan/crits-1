@@ -458,7 +458,12 @@ def ip_add_update(ip_address, ip_type, source=None, source_method='',
     resp_url = reverse('crits.ips.views.ip_detail', args=[ip_object.ip])
 
     if is_validate_only == False:
-        ip_object.save(username=analyst)
+        try:
+            ip_object.save(username=analyst)
+        except Exception as e:
+            retVal['success'] = False
+            retVal['message'] = str(e)
+            return retVal
 
         #set the URL for viewing the new data
         if is_item_new == True:

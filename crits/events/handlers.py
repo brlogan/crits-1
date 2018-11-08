@@ -379,6 +379,9 @@ def add_new_event(title, description, event_type, source, method,
     except ValidationError, e:
         result = {'success': False,
                   'message': e}
+    except event.NoWriteAccessError as e:
+        result = {'success': False,
+                  'message': str(e)}
     return result
 
 def event_remove(_id, username):

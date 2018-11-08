@@ -309,6 +309,17 @@ class CritsDocument(BaseDocument):
 
     unsupported_attrs = EmbeddedDocumentField(UnsupportedAttrs)
 
+    class NoWriteAccessError(Exception):
+        """
+        Raised when a DB write is attempted by a user without
+        write access.
+        """
+
+        def __init__(self, message='', **kwargs):
+            if not message:
+                message = "Error: You do not have write access"
+            super(Exception, self).__init__(message)
+
     def __init__(self, **values):
         """
         Override .save() and .delete() with our own custom versions.
@@ -318,6 +329,10 @@ class CritsDocument(BaseDocument):
             #.save() is normally defined on a Document, not BaseDocument, so
             #   we'll have to monkey patch to call our save.
             self.save = self._custom_save
+        if hasattr(self, 'update'):
+            #.update() is normally defined on a Document, not BaseDocument, so
+            #   we'll have to monkey patch to call our delete.
+            self.update = self._custom_update
         if hasattr(self, 'delete'):
             #.delete() is normally defined on a Document, not BaseDocument, so
             #   we'll have to monkey patch to call our delete.
@@ -331,6 +346,11 @@ class CritsDocument(BaseDocument):
         Custom save function. Extended to check for valid schema versions,
         automatically update modified times, and audit the changes made.
         """
+
+        # Don't allow Read Only role to save
+        from crits.core.user_tools import user_can_write
+        if username and not user_can_write(username):
+            raise self.NoWriteAccessError()
 
         from crits.core.handlers import audit_entry
         if hasattr(self, 'schema_version') and not self.schema_version:
@@ -366,12 +386,39 @@ class CritsDocument(BaseDocument):
             audit_entry(self, username, "save", new_doc=True)
         return
 
+    def _custom_update(self, username=None, **kwargs):
+        """
+        Custom update function. Extended to
+        automatically update modified times, and audit the changes made.
+        """
+
+        # Don't allow Read Only role to update
+        from crits.core.user_tools import user_can_write
+        exempt = ('SavedSearch',)
+        if not user_can_write(username) and type(self).__name__ not in exempt:
+            raise self.NoWriteAccessError()
+
+        from crits.core.handlers import audit_entry
+        audit_entry(self, username, "update")
+
+        if hasattr(self, 'modified'):
+            self.modified = datetime.datetime.now()
+
+        super(self.__class__, self).update(**kwargs)
+
+        return
+
     def _custom_delete(self, username=None, **write_concern):
         """
         Custom delete function. Overridden to allow us to extend to other parts
         of CRITs and clean up dangling relationships, comments, objects, GridFS
         files, bucket_list counts, and favorites.
         """
+
+        # Don't allow Read Only role to delete
+        from crits.core.user_tools import user_can_write
+        if not user_can_write(username):
+            raise self.NoWriteAccessError()
 
         from crits.core.handlers import audit_entry, alter_bucket_list
         audit_entry(self, username, "delete")
@@ -1868,7 +1915,7 @@ class CritsBaseAttributes(CritsDocument, CritsBaseDocument,
             rel_item.relationships.append(their_rel) # add to passed rel_item
 
             # updating DB this way can be much faster than saving entire TLO
-            rel_item.update(add_to_set__relationships=their_rel)
+            rel_item.update(add_to_set__relationships=their_rel, username=analyst)
 
         if get_rels:
             results = {'success': True,

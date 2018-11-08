@@ -184,7 +184,7 @@ def generate_audit_notification(username, operation_type, obj, changed_fields,
     if supported_notification is None:
         return
 
-    if operation_type == "save":
+    if operation_type in ("save", "update"):
         message = "%s updated the following attributes: %s" % (username,
                                                                what_changed)
     elif operation_type == "delete":

@@ -94,7 +94,7 @@ def forge_relationship(type_=None, id_=None,
         return {'success': False, 'message': e}
 
     if results['success']:
-        class_.update(add_to_set__relationships=results['message'])
+        class_.update(add_to_set__relationships=results['message'], username=user)
         if get_rels:
             results['relationships'] = class_.sort_relationships("%s" % user,
                                                                  meta=True)
