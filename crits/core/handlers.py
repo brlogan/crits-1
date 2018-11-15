@@ -2100,6 +2100,14 @@ def csv_export(request, col_obj, query={}):
     :returns: :class:`django.http.HttpResponse` -- CSV download response
     """
 
+    # TEMPORARILIY DISABLE
+    result = "CSV downloads have been disabled."
+    response = render_to_response("error.html",
+                                  {"error" : result },
+                                  RequestContext(request))
+    return response
+    # TEMPORARILIY DISABLE
+
     opts = parse_query_request(request,col_obj)
     if not query:
         resp = get_query(col_obj, request)
